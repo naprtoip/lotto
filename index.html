@@ -74,6 +74,24 @@
             gap: 8px;
         }
 
+        /* BADGE MODE */
+        .mode-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .mode-badge.local {
+            background: #4CAF50;
+        }
+
+        .mode-badge.cloud {
+            background: #2196F3;
+        }
+
         /* FILTRI RAPIDI */
         .filters {
             display: grid;
@@ -165,28 +183,37 @@
             color: white;
         }
 
-        /* PULSANTE ELABORA */
-        .elaborate-btn {
+        /* PULSANTI AZIONE */
+        .elaborate-btn, .print-btn {
             width: 100%;
             padding: 18px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             border: none;
             border-radius: 12px;
             color: white;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            margin: 20px 0;
-            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+            margin: 10px 0;
             touch-action: manipulation;
             transition: all 0.3s;
         }
 
-        .elaborate-btn:active {
+        .elaborate-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            box-shadow: 0 8px 20px rgba(56, 239, 125, 0.4);
+            display: none;
+        }
+
+        .elaborate-btn:active, .print-btn:active {
             transform: scale(0.98);
         }
 
-        .elaborate-btn:disabled {
+        .elaborate-btn:disabled, .print-btn:disabled {
             background: #555;
             cursor: not-allowed;
             opacity: 0.5;
@@ -217,6 +244,13 @@
             justify-content: center;
             font-size: 14px;
             font-weight: bold;
+        }
+
+        .progress-text {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 13px;
+            color: #00d4ff;
         }
 
         /* RISULTATI */
@@ -294,10 +328,16 @@
             z-index: 1000;
             display: none;
             font-weight: bold;
+            max-width: 90%;
+            text-align: center;
         }
 
         .toast.error {
             background: #f44336;
+        }
+
+        .toast.info {
+            background: #2196F3;
         }
 
         .toast.show {
@@ -326,13 +366,34 @@
                 grid-template-columns: repeat(4, 1fr);
             }
         }
+
+        /* LOADING SPINNER */
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #00d4ff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>🎯 Vincitore 98 Mobile</h1>
-        <div style="font-size: 12px; opacity: 0.8;">Sistema Ridotto Lotto</div>
+        <div style="font-size: 12px; opacity: 0.8;">
+            Sistema Ridotto Lotto
+            <span class="mode-badge local" id="modeBadge">📱 Locale</span>
+        </div>
     </div>
 
     <div class="stats">
@@ -352,7 +413,7 @@
 
     <!-- SEZIONE SELEZIONE NUMERI -->
     <div class="section">
-        <div class="section-title">📱 Seleziona Numeri (max 10)</div>
+        <div class="section-title">📱 Seleziona Numeri (1-90)</div>
         
         <div class="filters">
             <button class="filter-btn" id="filterPari">Pari</button>
@@ -426,6 +487,7 @@
         <div class="progress-bar">
             <div class="progress-fill" id="progressFill">0%</div>
         </div>
+        <div class="progress-text" id="progressText">Inizializzazione...</div>
     </div>
 
     <!-- RISULTATI -->
@@ -442,7 +504,13 @@
             <div style="margin: 5px 0; font-size: 20px; color: #00d4ff;">
                 Costo totale: <strong id="resultCosto">€0</strong>
             </div>
+            <div style="margin: 5px 0; font-size: 12px; opacity: 0.7;">
+                Modalità: <strong id="resultMode">-</strong>
+            </div>
         </div>
+
+        <!-- PULSANTE STAMPA -->
+        <button class="print-btn" id="printBtn">🖨️ STAMPA BOLLETTE</button>
 
         <div class="bollette" id="bolletteContainer"></div>
     </div>
@@ -458,11 +526,10 @@
         // Registra Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker registrato'))
-                .catch(err => console.log('SW errore:', err));
+                .then(reg => console.log('✅ Service Worker registrato'))
+                .catch(err => console.log('❌ SW errore:', err));
         }
     </script>
 
 </body>
 </html>
-
