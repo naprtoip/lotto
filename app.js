@@ -1,377 +1,663 @@
-// VINCITORE 98 MOBILE - App Logic
-// Ottimizzato per performance mobile
+// ==========================================
+// VINCITORE 98 MOBILE - APP.JS
+// Versione corretta per touch mobile
+// ==========================================
 
-const app = {
-    selected: new Set(),
-    bollette: [],
-    k: 4,
-    m: 2,
-
-    init() {
-        this.buildNumbersGrid();
-        this.updateConfig();
-        this.loadLastProject();
+// STATE GLOBALE
+const state = {
+    selectedNumbers: new Set(),
+    maxNumbers: 10,
+    sviluppo: 4,
+    garanzia: 2,
+    importi: {
+        estratto: 0,
+        ambo: 0.5,
+        terno: 0.5,
+        quaterna: 1
     },
-
-    buildNumbersGrid() {
-        const grid = document.getElementById('numbersGrid');
-        for (let i = 1; i <= 90; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'number-btn';
-            btn.textContent = i;
-            btn.onclick = () => this.toggleNumber(i);
-            btn.id = `num-${i}`;
-            grid.appendChild(btn);
-        }
-    },
-
-    toggleNumber(n) {
-        if (this.selected.has(n)) {
-            this.selected.delete(n);
-            document.getElementById(`num-${n}`).classList.remove('selected');
-        } else {
-            if (this.selected.size >= 10) {
-                this.showToast('⚠️ Massimo 10 numeri per bolletta (regola Lotto)');
-                return;
-            }
-            this.selected.add(n);
-            document.getElementById(`num-${n}`).classList.add('selected');
-        }
-        this.updateStats();
-    },
-
-    selectGroup(type) {
-        this.reset();
-        let nums = [];
-        
-        switch(type) {
-            case 'pari':
-                nums = Array.from({length: 45}, (_, i) => (i + 1) * 2);
-                break;
-            case 'dispari':
-                nums = Array.from({length: 45}, (_, i) => i * 2 + 1);
-                break;
-            case 'bassi':
-                nums = Array.from({length: 45}, (_, i) => i + 1);
-                break;
-            case 'alti':
-                nums = Array.from({length: 45}, (_, i) => i + 46);
-                break;
-        }
-        
-        // Seleziona primi 10
-        nums.slice(0, 10).forEach(n => {
-            this.selected.add(n);
-            document.getElementById(`num-${n}`).classList.add('selected');
-        });
-        
-        this.updateStats();
-    },
-
-    reset() {
-        this.selected.clear();
-        document.querySelectorAll('.number-btn').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        this.updateStats();
-    },
-
-    updateStats() {
-        const count = this.selected.size;
-        document.getElementById('selectedCount').textContent = count;
-        
-        // Calcola bollette teoriche
-        const k = this.k;
-        let total = 0;
-        if (count >= k) {
-            total = this.comb(count, k);
-        }
-        
-        document.getElementById('combCount').textContent = total > 1000000 
-            ? (total / 1000000).toFixed(1) + 'M'
-            : total.toLocaleString();
-        
-        this.updateConfig();
-    },
-
-    updateConfig() {
-        this.k = parseInt(document.getElementById('sviluppo').value);
-        this.m = parseInt(document.getElementById('garanzia').value);
-        
-        this.updateStats();
-        this.checkGaranzia();
-    },
-
-    checkGaranzia() {
-        const badge = document.getElementById('garanziaInfo');
-        const n = this.selected.size;
-        
-        // Garanzie certificate
-        const certified = {
-            '2-2-5': '✅ Ambi con garanzia Ambo - CERTIFICATA 100%',
-            '3-3-7': '✅ Terni con garanzia Terno - CERTIFICATA 100%',
-            '3-2-4': '✅ Terni con garanzia Ambo - CERTIFICATA 100%',
-            '4-3-9': '✅ Quaterne con garanzia Terno - CERTIFICATA 100%',
-            '4-2-5': '✅ Quaterne con garanzia Ambo - CERTIFICATA 100%'
-        };
-        
-        const key = `${this.k}-${this.m}-${n}`;
-        
-        if (certified[key]) {
-            badge.textContent = certified[key];
-            badge.className = 'garanzia-badge garanzia-ok';
-            badge.style.display = 'block';
-        } else if (n >= this.k && this.m <= this.k) {
-            badge.textContent = '⚠️ Garanzia possibile ma non certificata al 100%';
-            badge.className = 'garanzia-badge garanzia-no';
-            badge.style.display = 'block';
-        } else {
-            badge.style.display = 'none';
-        }
-    },
-
-    async elaborate() {
-        if (this.selected.size < 2) {
-            this.showToast('❌ Seleziona almeno 2 numeri');
-            return;
-        }
-
-        if (this.selected.size < this.k) {
-            this.showToast(`❌ Servono almeno ${this.k} numeri per sviluppo ${this.getSviluppoName()}`);
-            return;
-        }
-
-        if (this.m > this.k) {
-            this.showToast('❌ Garanzia non può essere maggiore dello sviluppo');
-            return;
-        }
-
-        const nums = Array.from(this.selected).sort((a, b) => a - b);
-        const totalCombs = this.comb(nums.length, this.k);
-
-        // Warning per elaborazioni pesanti
-        if (totalCombs > 100000) {
-            if (!confirm(`⚠️ ATTENZIONE\n\nQuesta elaborazione richiede:\n• ${totalCombs.toLocaleString()} combinazioni\n• Tempo stimato: 30-60 secondi\n• RAM: ~${(totalCombs * 50 / 1024 / 1024).toFixed(0)} MB\n\nVuoi procedere?`)) {
-                return;
-            }
-        }
-
-        // Mostra progress
-        this.showProgress();
-
-        // Usa Web Worker per non bloccare UI
-        try {
-            const startTime = Date.now();
-            
-            // Simula progress per le prime fasi
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 2;
-                if (progress < 90) {
-                    this.updateProgress(progress, 'Elaborazione in corso...');
-                }
-            }, 200);
-
-            // Esegui greedy (funzione in greedy.js)
-            const result = await greedyCover(nums, this.k, this.m, (pct, info) => {
-                clearInterval(progressInterval);
-                this.updateProgress(pct, info);
-            });
-
-            clearInterval(progressInterval);
-            
-            const elapsed = (Date.now() - startTime) / 1000;
-
-            this.bollette = result.bollette;
-            
-            this.hideProgress();
-            this.showResults(result, elapsed);
-            
-            document.getElementById('saveBtn').style.display = 'block';
-
-        } catch (error) {
-            this.hideProgress();
-            this.showToast('❌ Errore elaborazione: ' + error.message);
-            console.error(error);
-        }
-    },
-
-    showProgress() {
-        document.getElementById('progressContainer').style.display = 'flex';
-    },
-
-    hideProgress() {
-        document.getElementById('progressContainer').style.display = 'none';
-    },
-
-    updateProgress(pct, text) {
-        document.getElementById('progressBar').style.width = pct + '%';
-        document.getElementById('progressText').textContent = text;
-    },
-
-    showResults(result, elapsed) {
-        const { bollette, stats } = result;
-        
-        // Info
-        const info = `
-            📦 Bollette: ${bollette.length.toLocaleString()}
-            📉 Riduzione: ${stats.riduzione.toFixed(2)}%
-            🎯 Copertura: ${stats.copertura.toFixed(2)}%
-            ⏱️ Tempo: ${elapsed.toFixed(2)}s
-            ${stats.completa ? '🎊 GARANZIA 100% VERIFICATA!' : '⚠️ Copertura parziale'}
-        `;
-        
-        document.getElementById('resultsInfo').textContent = info;
-        
-        // Output
-        let output = '';
-        const preview = bollette.slice(0, 50);
-        preview.forEach((b, i) => {
-            output += `${(i+1).toString().padStart(4, ' ')}) ${b.map(n => n.toString().padStart(2, '0')).join(' ')}\n`;
-        });
-        
-        if (bollette.length > 50) {
-            output += `\n... e altre ${(bollette.length - 50).toLocaleString()} bollette`;
-        }
-        
-        document.getElementById('resultsOutput').textContent = output;
-        document.getElementById('resultsCard').style.display = 'block';
-        document.getElementById('resultsOutput').style.display = 'block';
-        
-        // Scroll to results
-        document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth' });
-        
-        this.showToast('✅ Elaborazione completata!');
-    },
-
-    saveProject() {
-        const project = {
-            date: new Date().toISOString(),
-            selected: Array.from(this.selected),
-            k: this.k,
-            m: this.m,
-            bollette: this.bollette,
-            importi: this.getImporti()
-        };
-        
-        // Save to localStorage
-        const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-        projects.unshift(project);
-        
-        // Keep max 10 projects
-        if (projects.length > 10) {
-            projects.pop();
-        }
-        
-        localStorage.setItem('projects', JSON.stringify(projects));
-        localStorage.setItem('lastProject', JSON.stringify(project));
-        
-        this.showToast('💾 Progetto salvato!');
-    },
-
-    loadLastProject() {
-        const last = localStorage.getItem('lastProject');
-        if (last) {
-            try {
-                const project = JSON.parse(last);
-                // Restore only selection, not bollette
-                this.selected = new Set(project.selected);
-                this.selected.forEach(n => {
-                    document.getElementById(`num-${n}`).classList.add('selected');
-                });
-                this.k = project.k;
-                this.m = project.m;
-                document.getElementById('sviluppo').value = this.k;
-                document.getElementById('garanzia').value = this.m;
-                
-                // Restore importi
-                if (project.importi) {
-                    Object.entries(project.importi).forEach(([key, val]) => {
-                        const input = document.getElementById(`imp-${key}`);
-                        if (input) input.value = val;
-                    });
-                }
-                
-                this.updateStats();
-            } catch (e) {
-                console.error('Error loading project:', e);
-            }
-        }
-    },
-
-    getImporti() {
-        return {
-            estratto: parseFloat(document.getElementById('imp-estratto').value) || 0,
-            ambo: parseFloat(document.getElementById('imp-ambo').value) || 0,
-            terno: parseFloat(document.getElementById('imp-terno').value) || 0,
-            quaterna: parseFloat(document.getElementById('imp-quaterna').value) || 0
-        };
-    },
-
-    async exportPDF() {
-        this.showToast('📄 Export PDF in sviluppo...');
-        // TODO: Implementare export PDF con jsPDF
-    },
-
-    showTab(tab) {
-        // Navigation logic
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        event.currentTarget.classList.add('active');
-        
-        if (tab === 'info') {
-            alert('ℹ️ VINCITORE 98 Mobile\n\nVersione: 1.0.0\nAlgoritmo: Greedy Set Cover\nGaranzia: Matematica al 100%\n\nSviluppato con ❤️');
-        } else if (tab === 'projects') {
-            this.showProjects();
-        }
-    },
-
-    showProjects() {
-        const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-        if (projects.length === 0) {
-            this.showToast('📁 Nessun progetto salvato');
-            return;
-        }
-        
-        let msg = '📁 PROGETTI SALVATI:\n\n';
-        projects.forEach((p, i) => {
-            const date = new Date(p.date).toLocaleDateString('it-IT');
-            msg += `${i+1}. ${date} - ${p.selected.length} numeri, ${p.bollette.length} bollette\n`;
-        });
-        
-        alert(msg);
-    },
-
-    showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
-    },
-
-    getSviluppoName() {
-        const names = { 2: 'Ambi', 3: 'Terni', 4: 'Quaterne', 5: 'Cinquine' };
-        return names[this.k] || this.k;
-    },
-
-    comb(n, k) {
-        if (k > n || k < 0) return 0;
-        if (k === 0 || k === n) return 1;
-        
-        let result = 1;
-        for (let i = 1; i <= k; i++) {
-            result *= (n - i + 1) / i;
-        }
-        return Math.round(result);
-    }
+    risultati: null
 };
 
-// Init app quando DOM è pronto
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => app.init());
-} else {
-    app.init();
+// DOM ELEMENTS
+let elements = {};
+
+// ==========================================
+// INIT
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 App inizializzata');
+    
+    // Cache elementi DOM
+    elements = {
+        numbersGrid: document.getElementById('numbersGrid'),
+        numCount: document.getElementById('numCount'),
+        bolletteCount: document.getElementById('bolletteCount'),
+        costTotal: document.getElementById('costTotal'),
+        elaborateBtn: document.getElementById('elaborateBtn'),
+        progressContainer: document.getElementById('progressContainer'),
+        progressFill: document.getElementById('progressFill'),
+        resultsSection: document.getElementById('resultsSection'),
+        bolletteContainer: document.getElementById('bolletteContainer'),
+        sviluppoSelect: document.getElementById('sviluppo'),
+        garanziaSelect: document.getElementById('garanzia'),
+        guaranteeBadge: document.getElementById('guaranteeBadge'),
+        toast: document.getElementById('toast'),
+        
+        // Importi
+        importoEstratto: document.getElementById('importoEstratto'),
+        importoAmbo: document.getElementById('importoAmbo'),
+        importoTerno: document.getElementById('importoTerno'),
+        importoQuaterna: document.getElementById('importoQuaterna'),
+        
+        // Filtri
+        filterPari: document.getElementById('filterPari'),
+        filterDispari: document.getElementById('filterDispari'),
+        filter1_45: document.getElementById('filter1_45'),
+        filter46_90: document.getElementById('filter46_90'),
+        resetBtn: document.getElementById('resetBtn'),
+        
+        // Risultati
+        resultBollette: document.getElementById('resultBollette'),
+        resultTime: document.getElementById('resultTime'),
+        resultGaranzia: document.getElementById('resultGaranzia'),
+        resultCosto: document.getElementById('resultCosto')
+    };
+    
+    // Genera griglia numeri
+    generateNumbersGrid();
+    
+    // Event listeners
+    setupEventListeners();
+    
+    // Carica stato salvato
+    loadState();
+    
+    // Update UI iniziale
+    updateStats();
+    validateGaranzia();
+    
+    console.log('✅ Setup completato');
+});
+
+// ==========================================
+// GENERA GRIGLIA NUMERI
+// ==========================================
+function generateNumbersGrid() {
+    const grid = elements.numbersGrid;
+    grid.innerHTML = '';
+    
+    for (let i = 1; i <= 90; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'number-btn';
+        btn.textContent = i;
+        btn.dataset.number = i;
+        
+        // IMPORTANTE: Usa touchend per mobile (più reattivo di click)
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault(); // Previene doppio click
+            toggleNumber(i, btn);
+        });
+        
+        // Fallback per desktop
+        btn.addEventListener('click', (e) => {
+            if (e.detail === 0) return; // Ignora se già gestito da touch
+            toggleNumber(i, btn);
+        });
+        
+        grid.appendChild(btn);
+    }
+    
+    console.log('✅ Griglia 90 numeri creata');
 }
+
+// ==========================================
+// TOGGLE NUMERO
+// ==========================================
+function toggleNumber(num, btn) {
+    if (state.selectedNumbers.has(num)) {
+        // Deseleziona
+        state.selectedNumbers.delete(num);
+        btn.classList.remove('selected');
+        console.log(`➖ Rimosso: ${num}`);
+    } else {
+        // Seleziona (se non superato limite)
+        if (state.selectedNumbers.size >= state.maxNumbers) {
+            showToast(`Massimo ${state.maxNumbers} numeri!`, 'error');
+            return;
+        }
+        state.selectedNumbers.add(num);
+        btn.classList.add('selected');
+        console.log(`➕ Aggiunto: ${num}`);
+    }
+    
+    updateStats();
+    saveState();
+}
+
+// ==========================================
+// SETUP EVENT LISTENERS
+// ==========================================
+function setupEventListeners() {
+    
+    // PULSANTE ELABORA (CRITICAL FIX!)
+    elements.elaborateBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        elaboraSistema();
+    });
+    
+    elements.elaborateBtn.addEventListener('click', (e) => {
+        if (e.detail === 0) return;
+        elaboraSistema();
+    });
+    
+    // FILTRI (FIX: Logica corretta identica a Python)
+    elements.filterPari.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        toggleFilterPari();
+    });
+    elements.filterPari.addEventListener('click', (e) => {
+        if (e.detail === 0) return;
+        toggleFilterPari();
+    });
+    
+    elements.filterDispari.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        toggleFilterDispari();
+    });
+    elements.filterDispari.addEventListener('click', (e) => {
+        if (e.detail === 0) return;
+        toggleFilterDispari();
+    });
+    
+    elements.filter1_45.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        toggleFilter1_45();
+    });
+    elements.filter1_45.addEventListener('click', (e) => {
+        if (e.detail === 0) return;
+        toggleFilter1_45();
+    });
+    
+    elements.filter46_90.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        toggleFilter46_90();
+    });
+    elements.filter46_90.addEventListener('click', (e) => {
+        if (e.detail === 0) return;
+        toggleFilter46_90();
+    });
+    
+    // RESET
+    elements.resetBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        resetAll();
+    });
+    elements.resetBtn.addEventListener('click', (e) => {
+        if (e.detail === 0) return;
+        resetAll();
+    });
+    
+    // CONFIGURAZIONE
+    elements.sviluppoSelect.addEventListener('change', () => {
+        state.sviluppo = parseInt(elements.sviluppoSelect.value);
+        validateGaranzia();
+        saveState();
+        console.log(`Sviluppo: ${state.sviluppo}`);
+    });
+    
+    elements.garanziaSelect.addEventListener('change', () => {
+        state.garanzia = parseInt(elements.garanziaSelect.value);
+        validateGaranzia();
+        saveState();
+        console.log(`Garanzia: ${state.garanzia}`);
+    });
+    
+    // IMPORTI
+    [elements.importoEstratto, elements.importoAmbo, elements.importoTerno, elements.importoQuaterna].forEach(input => {
+        input.addEventListener('input', () => {
+            state.importi = {
+                estratto: parseFloat(elements.importoEstratto.value) || 0,
+                ambo: parseFloat(elements.importoAmbo.value) || 0,
+                terno: parseFloat(elements.importoTerno.value) || 0,
+                quaterna: parseFloat(elements.importoQuaterna.value) || 0
+            };
+            updateStats();
+            saveState();
+        });
+    });
+    
+    console.log('✅ Event listeners attivati');
+}
+
+// ==========================================
+// FILTRI (LOGICA CORRETTA - IDENTICA PYTHON)
+// ==========================================
+function toggleFilterPari() {
+    const pariNums = [];
+    for (let i = 2; i <= 90; i += 2) pariNums.push(i);
+    
+    const btn = elements.filterPari;
+    const isActive = btn.classList.contains('active');
+    
+    if (isActive) {
+        // Deseleziona tutti i pari
+        pariNums.forEach(num => {
+            state.selectedNumbers.delete(num);
+            const btn = document.querySelector(`[data-number="${num}"]`);
+            if (btn) btn.classList.remove('selected');
+        });
+        btn.classList.remove('active');
+        console.log('➖ Deselezionati pari');
+    } else {
+        // Seleziona pari disponibili (max 10 totali)
+        pariNums.forEach(num => {
+            if (state.selectedNumbers.size < state.maxNumbers) {
+                state.selectedNumbers.add(num);
+                const btn = document.querySelector(`[data-number="${num}"]`);
+                if (btn) btn.classList.add('selected');
+            }
+        });
+        btn.classList.add('active');
+        console.log('➕ Selezionati pari');
+    }
+    
+    updateStats();
+    saveState();
+}
+
+function toggleFilterDispari() {
+    const dispariNums = [];
+    for (let i = 1; i <= 90; i += 2) dispariNums.push(i);
+    
+    const btn = elements.filterDispari;
+    const isActive = btn.classList.contains('active');
+    
+    if (isActive) {
+        dispariNums.forEach(num => {
+            state.selectedNumbers.delete(num);
+            const btn = document.querySelector(`[data-number="${num}"]`);
+            if (btn) btn.classList.remove('selected');
+        });
+        btn.classList.remove('active');
+        console.log('➖ Deselezionati dispari');
+    } else {
+        dispariNums.forEach(num => {
+            if (state.selectedNumbers.size < state.maxNumbers) {
+                state.selectedNumbers.add(num);
+                const btn = document.querySelector(`[data-number="${num}"]`);
+                if (btn) btn.classList.add('selected');
+            }
+        });
+        btn.classList.add('active');
+        console.log('➕ Selezionati dispari');
+    }
+    
+    updateStats();
+    saveState();
+}
+
+function toggleFilter1_45() {
+    const nums = [];
+    for (let i = 1; i <= 45; i++) nums.push(i);
+    
+    const btn = elements.filter1_45;
+    const isActive = btn.classList.contains('active');
+    
+    if (isActive) {
+        nums.forEach(num => {
+            state.selectedNumbers.delete(num);
+            const btn = document.querySelector(`[data-number="${num}"]`);
+            if (btn) btn.classList.remove('selected');
+        });
+        btn.classList.remove('active');
+        console.log('➖ Deselezionati 1-45');
+    } else {
+        nums.forEach(num => {
+            if (state.selectedNumbers.size < state.maxNumbers) {
+                state.selectedNumbers.add(num);
+                const btn = document.querySelector(`[data-number="${num}"]`);
+                if (btn) btn.classList.add('selected');
+            }
+        });
+        btn.classList.add('active');
+        console.log('➕ Selezionati 1-45');
+    }
+    
+    updateStats();
+    saveState();
+}
+
+function toggleFilter46_90() {
+    const nums = [];
+    for (let i = 46; i <= 90; i++) nums.push(i);
+    
+    const btn = elements.filter46_90;
+    const isActive = btn.classList.contains('active');
+    
+    if (isActive) {
+        nums.forEach(num => {
+            state.selectedNumbers.delete(num);
+            const btn = document.querySelector(`[data-number="${num}"]`);
+            if (btn) btn.classList.remove('selected');
+        });
+        btn.classList.remove('active');
+        console.log('➖ Deselezionati 46-90');
+    } else {
+        nums.forEach(num => {
+            if (state.selectedNumbers.size < state.maxNumbers) {
+                state.selectedNumbers.add(num);
+                const btn = document.querySelector(`[data-number="${num}"]`);
+                if (btn) btn.classList.add('selected');
+            }
+        });
+        btn.classList.add('active');
+        console.log('➕ Selezionati 46-90');
+    }
+    
+    updateStats();
+    saveState();
+}
+
+function resetAll() {
+    state.selectedNumbers.clear();
+    document.querySelectorAll('.number-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    elements.resultsSection.style.display = 'none';
+    updateStats();
+    saveState();
+    showToast('Reset completato!', 'success');
+    console.log('🔄 Reset totale');
+}
+
+// ==========================================
+// ELABORA SISTEMA
+// ==========================================
+async function elaboraSistema() {
+    console.log('🎯 ELABORA CLICCATO!');
+    
+    // Validazione
+    if (state.selectedNumbers.size < state.garanzia) {
+        showToast(`Serve almeno ${state.garanzia} numeri per questa garanzia!`, 'error');
+        return;
+    }
+    
+    if (state.garanzia > state.sviluppo) {
+        showToast('Garanzia non può essere > Sviluppo!', 'error');
+        return;
+    }
+    
+    // UI: Disabilita pulsante
+    elements.elaborateBtn.disabled = true;
+    elements.elaborateBtn.textContent = '⏳ Elaborazione...';
+    elements.progressContainer.style.display = 'block';
+    elements.resultsSection.style.display = 'none';
+    
+    console.log(`Numeri: ${Array.from(state.selectedNumbers).sort((a,b) => a-b)}`);
+    console.log(`k=${state.sviluppo}, m=${state.garanzia}`);
+    
+    // Converti Set a Array
+    const numeri = Array.from(state.selectedNumbers).sort((a, b) => a - b);
+    
+    // Callback progresso
+    const progressCallback = (progress) => {
+        const percent = Math.round(progress * 100);
+        elements.progressFill.style.width = `${percent}%`;
+        elements.progressFill.textContent = `${percent}%`;
+    };
+    
+    try {
+        const startTime = performance.now();
+        
+        // CHIAMATA ALGORITMO (da greedy.js)
+        console.log('Chiamando greedySetCover...');
+        const bollette = await greedySetCover(
+            numeri,
+            state.sviluppo,
+            state.garanzia,
+            progressCallback
+        );
+        
+        const endTime = performance.now();
+        const timeElapsed = ((endTime - startTime) / 1000).toFixed(2);
+        
+        console.log(`✅ Elaborazione completata: ${bollette.length} bollette in ${timeElapsed}s`);
+        
+        // Salva risultati
+        state.risultati = {
+            bollette: bollette,
+            tempo: timeElapsed,
+            numBollette: bollette.length
+        };
+        
+        // Mostra risultati
+        displayResults();
+        
+        showToast('✅ Sistema elaborato!', 'success');
+        
+    } catch (error) {
+        console.error('❌ Errore elaborazione:', error);
+        showToast('Errore durante elaborazione!', 'error');
+    } finally {
+        // Ripristina UI
+        elements.elaborateBtn.disabled = false;
+        elements.elaborateBtn.textContent = '⚙️ ELABORA SISTEMA';
+        elements.progressContainer.style.display = 'none';
+        elements.progressFill.style.width = '0%';
+    }
+}
+
+// ==========================================
+// DISPLAY RISULTATI
+// ==========================================
+function displayResults() {
+    const { bollette, tempo, numBollette } = state.risultati;
+    
+    // Calcola costo
+    const costo = calcolaCosto(bollette);
+    
+    // Update summary
+    elements.resultBollette.textContent = numBollette;
+    elements.resultTime.textContent = `${tempo}s`;
+    elements.resultGaranzia.textContent = `${state.garanzia} su ${state.sviluppo}`;
+    elements.resultCosto.textContent = `€${costo.toFixed(2)}`;
+    
+    // Mostra bollette
+    elements.bolletteContainer.innerHTML = '';
+    bollette.forEach((bolletta, idx) => {
+        const div = document.createElement('div');
+        div.className = 'bolletta';
+        
+        const header = document.createElement('div');
+        header.className = 'bolletta-header';
+        header.textContent = `Bolletta ${idx + 1}`;
+        
+        const numbers = document.createElement('div');
+        numbers.className = 'bolletta-numbers';
+        
+        bolletta.forEach(num => {
+            const span = document.createElement('span');
+            span.className = 'bolletta-number';
+            span.textContent = num;
+            numbers.appendChild(span);
+        });
+        
+        div.appendChild(header);
+        div.appendChild(numbers);
+        elements.bolletteContainer.appendChild(div);
+    });
+    
+    // Mostra sezione
+    elements.resultsSection.style.display = 'block';
+    
+    // Scroll verso risultati
+    elements.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // Update stats header
+    elements.bolletteCount.textContent = numBollette;
+    elements.costTotal.textContent = `€${costo.toFixed(2)}`;
+}
+
+// ==========================================
+// CALCOLA COSTO
+// ==========================================
+function calcolaCosto(bollette) {
+    const k = state.sviluppo;
+    let costo = 0;
+    
+    bollette.forEach(bolletta => {
+        // Estratti: k
+        costo += k * state.importi.estratto;
+        
+        // Ambi: C(k,2)
+        if (k >= 2) {
+            const ambi = (k * (k - 1)) / 2;
+            costo += ambi * state.importi.ambo;
+        }
+        
+        // Terni: C(k,3)
+        if (k >= 3) {
+            const terni = (k * (k - 1) * (k - 2)) / 6;
+            costo += terni * state.importi.terno;
+        }
+        
+        // Quaterne: C(k,4)
+        if (k >= 4) {
+            const quaterne = (k * (k - 1) * (k - 2) * (k - 3)) / 24;
+            costo += quaterne * state.importi.quaterna;
+        }
+    });
+    
+    return costo;
+}
+
+// ==========================================
+// UPDATE STATS
+// ==========================================
+function updateStats() {
+    elements.numCount.textContent = state.selectedNumbers.size;
+    
+    // Stima bollette (approssimativa)
+    const n = state.selectedNumbers.size;
+    const k = state.sviluppo;
+    const m = state.garanzia;
+    
+    let stimaBollette = 0;
+    if (n >= m && m <= k) {
+        // Formula approssimativa: C(n,m) / C(k,m)
+        stimaBollette = Math.ceil(combinazioni(n, m) / combinazioni(k, m));
+    }
+    
+    if (state.risultati) {
+        elements.bolletteCount.textContent = state.risultati.numBollette;
+        const costo = calcolaCosto(state.risultati.bollette);
+        elements.costTotal.textContent = `€${costo.toFixed(2)}`;
+    } else {
+        elements.bolletteCount.textContent = stimaBollette > 0 ? `~${stimaBollette}` : '0';
+        elements.costTotal.textContent = '€0';
+    }
+}
+
+// ==========================================
+// VALIDA GARANZIA
+// ==========================================
+function validateGaranzia() {
+    const badge = elements.guaranteeBadge;
+    
+    if (state.garanzia > state.sviluppo) {
+        badge.textContent = '✗ Non valida';
+        badge.classList.add('invalid');
+        elements.elaborateBtn.disabled = true;
+    } else {
+        badge.textContent = '✓ Valida';
+        badge.classList.remove('invalid');
+        elements.elaborateBtn.disabled = false;
+    }
+}
+
+// ==========================================
+// TOAST NOTIFICATIONS
+// ==========================================
+function showToast(message, type = 'success') {
+    const toast = elements.toast;
+    toast.textContent = message;
+    toast.className = `toast ${type} show`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// ==========================================
+// UTILITY: COMBINAZIONI
+// ==========================================
+function combinazioni(n, k) {
+    if (k > n) return 0;
+    if (k === 0 || k === n) return 1;
+    
+    let result = 1;
+    for (let i = 0; i < k; i++) {
+        result *= (n - i);
+        result /= (i + 1);
+    }
+    return Math.round(result);
+}
+
+// ==========================================
+// SALVATAGGIO/CARICAMENTO STATO
+// ==========================================
+function saveState() {
+    try {
+        const data = {
+            selectedNumbers: Array.from(state.selectedNumbers),
+            sviluppo: state.sviluppo,
+            garanzia: state.garanzia,
+            importi: state.importi
+        };
+        localStorage.setItem('vincitore98_state', JSON.stringify(data));
+        console.log('💾 Stato salvato');
+    } catch (e) {
+        console.error('Errore salvataggio:', e);
+    }
+}
+
+function loadState() {
+    try {
+        const saved = localStorage.getItem('vincitore98_state');
+        if (saved) {
+            const data = JSON.parse(saved);
+            
+            // Ripristina numeri
+            data.selectedNumbers.forEach(num => {
+                state.selectedNumbers.add(num);
+                const btn = document.querySelector(`[data-number="${num}"]`);
+                if (btn) btn.classList.add('selected');
+            });
+            
+            // Ripristina config
+            state.sviluppo = data.sviluppo || 4;
+            state.garanzia = data.garanzia || 2;
+            state.importi = data.importi || state.importi;
+            
+            // Update UI
+            elements.sviluppoSelect.value = state.sviluppo;
+            elements.garanziaSelect.value = state.garanzia;
+            elements.importoEstratto.value = state.importi.estratto;
+            elements.importoAmbo.value = state.importi.ambo;
+            elements.importoTerno.value = state.importi.terno;
+            elements.importoQuaterna.value = state.importi.quaterna;
+            
+            console.log('📂 Stato caricato');
+        }
+    } catch (e) {
+        console.error('Errore caricamento:', e);
+    }
+}
+
+// ==========================================
+// DEBUG
+// ==========================================
+console.log('✅ app.js caricato correttamente');
