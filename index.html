@@ -3,20 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1976D2">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="Sistema ridotto Lotto con garanzia matematica - Mobile App">
-    
+    <meta name="theme-color" content="#1a1a2e">
     <title>Vincitore 98 Mobile</title>
-    
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    
-    <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    
     <style>
         * {
             margin: 0;
@@ -25,596 +14,455 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        :root {
-            --primary: #1976D2;
-            --primary-dark: #1565C0;
-            --accent: #4CAF50;
-            --danger: #F44336;
-            --warning: #FF9800;
-            --bg: #FAFAFA;
-            --surface: #FFFFFF;
-            --text: #212121;
-            --text-secondary: #757575;
-            --border: #E0E0E0;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #121212;
-                --surface: #1E1E1E;
-                --text: #FFFFFF;
-                --text-secondary: #B0B0B0;
-                --border: #333333;
-            }
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding-bottom: 70px;
         }
 
-        /* Header */
         .header {
-            background: var(--primary);
-            color: white;
-            padding: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid #00d4ff;
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .header h1 {
             font-size: 20px;
-            font-weight: 600;
+            margin-bottom: 5px;
         }
 
-        .header-subtitle {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 4px;
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: rgba(0,212,255,0.1);
+            margin: 10px;
+            border-radius: 10px;
+            font-size: 14px;
         }
 
-        /* Container */
-        .container {
-            padding: 16px;
-            max-width: 600px;
-            margin: 0 auto;
-            padding-bottom: 80px;
+        .stat-item {
+            text-align: center;
         }
 
-        /* Cards */
-        .card {
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
         }
 
-        .card-title {
+        .section {
+            margin: 15px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .section-title {
             font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--text);
+            margin-bottom: 10px;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* Griglia numeri - OTTIMIZZATA MOBILE */
+        /* FILTRI RAPIDI */
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .filter-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 0 20px rgba(245, 87, 108, 0.5);
+        }
+
+        /* GRIGLIA NUMERI */
         .numbers-grid {
             display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 6px;
-            margin-bottom: 12px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 15px 0;
         }
 
         .number-btn {
             aspect-ratio: 1;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface);
-            color: var(--text);
-            font-size: 14px;
-            font-weight: 600;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
             touch-action: manipulation;
         }
 
         .number-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.9);
         }
 
         .number-btn.selected {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
+            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+            transform: scale(1.05);
         }
 
-        /* Filtri rapidi */
-        .filters {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+        /* CONFIGURAZIONE */
+        .config-group {
+            margin: 15px 0;
         }
 
-        .filters::-webkit-scrollbar {
-            display: none;
+        .config-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #00d4ff;
         }
 
-        .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            background: var(--surface);
-            color: var(--text);
-            font-size: 14px;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .filter-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .stat-box {
-            background: var(--primary);
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 4px;
-        }
-
-        /* Select */
-        select {
+        select, input[type="number"] {
             width: 100%;
             padding: 12px;
-            border: 2px solid var(--border);
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
             border-radius: 8px;
-            background: var(--surface);
-            color: var(--text);
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-
-        /* Input importi */
-        .importi-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .input-group label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .input-group input {
-            padding: 10px;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            background: var(--surface);
-            color: var(--text);
-            font-size: 14px;
-        }
-
-        /* Buttons */
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
+            color: white;
             font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 12px;
-            touch-action: manipulation;
+            margin-bottom: 10px;
         }
 
-        .btn:active {
+        option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        /* PULSANTE ELABORA */
+        .elaborate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 0;
+            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+            touch-action: manipulation;
+            transition: all 0.3s;
+        }
+
+        .elaborate-btn:active {
             transform: scale(0.98);
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
+        .elaborate-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
         }
 
-        .btn-accent {
-            background: var(--accent);
-            color: white;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        /* Progress */
+        /* PROGRESS BAR */
         .progress-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+            margin: 15px 0;
         }
 
-        .progress-card {
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 24px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .progress-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .progress-bar-bg {
-            background: var(--border);
-            border-radius: 8px;
-            height: 8px;
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
             overflow: hidden;
-            margin-bottom: 12px;
+            position: relative;
         }
 
-        .progress-bar-fill {
-            background: var(--accent);
+        .progress-fill {
             height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #0099ff);
             width: 0%;
             transition: width 0.3s;
-        }
-
-        .progress-text {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
+            font-weight: bold;
         }
 
-        /* Results */
+        /* RISULTATI */
         .results {
             display: none;
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.6;
-            padding: 12px;
-            background: var(--bg);
-            border-radius: 8px;
         }
 
-        /* Toast */
+        .result-card {
+            background: rgba(0,212,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #00d4ff;
+        }
+
+        .bollette {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .bolletta {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+
+        .bolletta-header {
+            color: #00d4ff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .bolletta-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .bolletta-number {
+            background: #667eea;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* BADGE GARANZIA */
+        .guarantee-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #4CAF50;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .guarantee-badge.invalid {
+            background: #f44336;
+        }
+
+        /* TOAST NOTIFICATIONS */
         .toast {
             position: fixed;
             bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--text);
-            color: var(--bg);
-            padding: 12px 24px;
-            border-radius: 24px;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 1001;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            font-weight: bold;
+        }
+
+        .toast.error {
+            background: #f44336;
         }
 
         .toast.show {
-            opacity: 1;
+            display: block;
+            animation: slideUp 0.3s ease;
         }
 
-        /* Bottom Nav */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            padding: 8px 0;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
         }
 
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 8px;
-            color: var(--text-secondary);
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .nav-item.active {
-            color: var(--primary);
-        }
-
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-
-        /* Install prompt */
-        .install-prompt {
-            background: var(--primary);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .install-prompt.show {
-            display: flex;
-        }
-
-        .install-btn {
-            background: white;
-            color: var(--primary);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: none;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        /* Garanzia badge */
-        .garanzia-badge {
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-        .garanzia-ok {
-            background: #E8F5E9;
-            color: #2E7D32;
-            border: 2px solid #4CAF50;
-        }
-
-        .garanzia-no {
-            background: #FFEBEE;
-            color: #C62828;
-            border: 2px solid #F44336;
-        }
-
-        /* Responsive tweaks */
-        @media (max-width: 360px) {
+        /* RESPONSIVE */
+        @media (min-width: 600px) {
             .numbers-grid {
-                gap: 4px;
+                grid-template-columns: repeat(10, 1fr);
             }
             
-            .number-btn {
-                font-size: 12px;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .container {
-                padding: 24px;
-            }
-            
-            .numbers-grid {
-                gap: 8px;
+            .filters {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
+
     <div class="header">
-        <h1>🎯 Vincitore 98</h1>
-        <div class="header-subtitle">Sistema Ridotto Lotto Mobile</div>
+        <h1>🎯 Vincitore 98 Mobile</h1>
+        <div style="font-size: 12px; opacity: 0.8;">Sistema Ridotto Lotto</div>
     </div>
 
-    <!-- Install Prompt -->
-    <div class="install-prompt" id="installPrompt">
-        <div>
-            <strong>📱 Installa l'App</strong><br>
-            <small>Funziona offline!</small>
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="numCount">0</div>
+            <div>Numeri</div>
         </div>
-        <button class="install-btn" id="installBtn">Installa</button>
+        <div class="stat-item">
+            <div class="stat-value" id="bolletteCount">0</div>
+            <div>Bollette</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="costTotal">€0</div>
+            <div>Costo</div>
+        </div>
     </div>
 
-    <!-- Container -->
-    <div class="container">
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-value" id="selectedCount">0</div>
-                <div class="stat-label">Numeri</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value" id="combCount">0</div>
-                <div class="stat-label">Bollette</div>
-            </div>
-        </div>
-
-        <!-- Numeri -->
-        <div class="card">
-            <div class="card-title">Seleziona Numeri (max 10)</div>
-            
-            <!-- Filtri -->
-            <div class="filters">
-                <button class="filter-btn" onclick="app.selectGroup('pari')">Pari</button>
-                <button class="filter-btn" onclick="app.selectGroup('dispari')">Dispari</button>
-                <button class="filter-btn" onclick="app.selectGroup('bassi')">1-45</button>
-                <button class="filter-btn" onclick="app.selectGroup('alti')">46-90</button>
-                <button class="filter-btn" onclick="app.reset()">Reset</button>
-            </div>
-
-            <!-- Griglia -->
-            <div class="numbers-grid" id="numbersGrid"></div>
-        </div>
-
-        <!-- Configurazione -->
-        <div class="card">
-            <div class="card-title">Configurazione</div>
-            
-            <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Sviluppo:</label>
-            <select id="sviluppo" onchange="app.updateConfig()">
-                <option value="2">Ambi (2 numeri)</option>
-                <option value="3">Terni (3 numeri)</option>
-                <option value="4" selected>Quaterne (4 numeri)</option>
-                <option value="5">Cinquine (5 numeri)</option>
-            </select>
-
-            <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Garanzia:</label>
-            <select id="garanzia" onchange="app.updateConfig()">
-                <option value="1">Estratto (1 estr.)</option>
-                <option value="2" selected>Ambo (2 estr.)</option>
-                <option value="3">Terno (3 estr.)</option>
-                <option value="4">Quaterna (4 estr.)</option>
-            </select>
-
-            <div id="garanziaInfo" class="garanzia-badge"></div>
-        </div>
-
-        <!-- Importi -->
-        <div class="card">
-            <div class="card-title">💰 Importi Giocata (€)</div>
-            <div class="importi-grid">
-                <div class="input-group">
-                    <label>Estratto</label>
-                    <input type="number" id="imp-estratto" step="0.1" value="0" min="0">
-                </div>
-                <div class="input-group">
-                    <label>Ambo</label>
-                    <input type="number" id="imp-ambo" step="0.1" value="0.5" min="0">
-                </div>
-                <div class="input-group">
-                    <label>Terno</label>
-                    <input type="number" id="imp-terno" step="0.1" value="0.5" min="0">
-                </div>
-                <div class="input-group">
-                    <label>Quaterna</label>
-                    <input type="number" id="imp-quaterna" step="0.1" value="1" min="0">
-                </div>
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <button class="btn btn-primary" onclick="app.elaborate()">⚙️ ELABORA SISTEMA</button>
-        <button class="btn btn-accent" onclick="app.saveProject()" id="saveBtn" style="display: none;">💾 Salva Progetto</button>
+    <!-- SEZIONE SELEZIONE NUMERI -->
+    <div class="section">
+        <div class="section-title">📱 Seleziona Numeri (max 10)</div>
         
-        <!-- Results -->
-        <div class="card" id="resultsCard" style="display: none;">
-            <div class="card-title">📋 Risultati</div>
-            <div id="resultsInfo" style="margin-bottom: 12px; font-size: 14px;"></div>
-            <div class="results" id="resultsOutput"></div>
-            <button class="btn btn-warning" onclick="app.exportPDF()">📄 Esporta PDF</button>
+        <div class="filters">
+            <button class="filter-btn" id="filterPari">Pari</button>
+            <button class="filter-btn" id="filterDispari">Dispari</button>
+            <button class="filter-btn" id="filter1_45">1-45</button>
+            <button class="filter-btn" id="filter46_90">46-90</button>
+        </div>
+
+        <button class="filter-btn" style="width: 100%; background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);" id="resetBtn">🔄 Reset Tutto</button>
+
+        <div class="numbers-grid" id="numbersGrid"></div>
+    </div>
+
+    <!-- SEZIONE CONFIGURAZIONE -->
+    <div class="section">
+        <div class="section-title">⚙️ Configurazione</div>
+
+        <div class="config-group">
+            <label class="config-label">Sviluppo (k)</label>
+            <select id="sviluppo">
+                <option value="2">Ambi (k=2)</option>
+                <option value="3">Terni (k=3)</option>
+                <option value="4" selected>Quaterne (k=4)</option>
+                <option value="5">Cinquine (k=5)</option>
+            </select>
+        </div>
+
+        <div class="config-group">
+            <label class="config-label">Garanzia (m)
+                <span class="guarantee-badge" id="guaranteeBadge">✓ Valida</span>
+            </label>
+            <select id="garanzia">
+                <option value="1">Estratto (m=1)</option>
+                <option value="2" selected>Ambo (m=2)</option>
+                <option value="3">Terno (m=3)</option>
+                <option value="4">Quaterna (m=4)</option>
+            </select>
         </div>
     </div>
 
-    <!-- Progress -->
+    <!-- SEZIONE IMPORTI -->
+    <div class="section">
+        <div class="section-title">💰 Importi Giocata (€)</div>
+        
+        <div class="config-group">
+            <label class="config-label">Estratto</label>
+            <input type="number" id="importoEstratto" value="0" step="0.1" min="0">
+        </div>
+
+        <div class="config-group">
+            <label class="config-label">Ambo</label>
+            <input type="number" id="importoAmbo" value="0.5" step="0.1" min="0">
+        </div>
+
+        <div class="config-group">
+            <label class="config-label">Terno</label>
+            <input type="number" id="importoTerno" value="0.5" step="0.1" min="0">
+        </div>
+
+        <div class="config-group">
+            <label class="config-label">Quaterna</label>
+            <input type="number" id="importoQuaterna" value="1" step="0.1" min="0">
+        </div>
+    </div>
+
+    <!-- PULSANTE ELABORA -->
+    <button class="elaborate-btn" id="elaborateBtn">⚙️ ELABORA SISTEMA</button>
+
+    <!-- PROGRESS BAR -->
     <div class="progress-container" id="progressContainer">
-        <div class="progress-card">
-            <div class="progress-title">🎯 Elaborazione</div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progressBar"></div>
-            </div>
-            <div class="progress-text" id="progressText">Inizializzazione...</div>
-            <div class="progress-text" id="progressTime"></div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill">0%</div>
         </div>
     </div>
 
-    <!-- Toast -->
+    <!-- RISULTATI -->
+    <div class="section results" id="resultsSection">
+        <div class="section-title">📋 Risultati</div>
+        
+        <div class="result-card">
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">
+                🎯 Sistema Elaborato
+            </div>
+            <div style="margin: 5px 0;">Bollette generate: <strong id="resultBollette">0</strong></div>
+            <div style="margin: 5px 0;">Tempo elaborazione: <strong id="resultTime">0s</strong></div>
+            <div style="margin: 5px 0;">Garanzia: <strong id="resultGaranzia">-</strong></div>
+            <div style="margin: 5px 0; font-size: 20px; color: #00d4ff;">
+                Costo totale: <strong id="resultCosto">€0</strong>
+            </div>
+        </div>
+
+        <div class="bollette" id="bolletteContainer"></div>
+    </div>
+
+    <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
-    <!-- Bottom Nav -->
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="app.showTab('home')">
-            <div class="nav-icon">🏠</div>
-            <div>Home</div>
-        </div>
-        <div class="nav-item" onclick="app.showTab('projects')">
-            <div class="nav-icon">📁</div>
-            <div>Progetti</div>
-        </div>
-        <div class="nav-item" onclick="app.showTab('info')">
-            <div class="nav-icon">ℹ️</div>
-            <div>Info</div>
-        </div>
-    </div>
-
-    <!-- Script principale -->
-    <script src="app.js"></script>
+    <!-- SCRIPTS -->
     <script src="greedy.js"></script>
+    <script src="app.js"></script>
+    
     <script>
-        // Service Worker registration
+        // Registra Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(() => {
-                console.log('✅ Service Worker registrato');
-            });
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrato'))
+                .catch(err => console.log('SW errore:', err));
         }
-
-        // Install prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installPrompt').classList.add('show');
-        });
-
-        document.getElementById('installBtn').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    document.getElementById('installPrompt').classList.remove('show');
-                }
-                deferredPrompt = null;
-            }
-        });
     </script>
+
 </body>
 </html>
+
